@@ -27,12 +27,15 @@ openai.api_key = os.getenv('OPENAI_API_KEY')
 
 
 def GPT_response(text):
-    # 接收回應
-    response = openai.Completion.create(model="gpt-4o-mini", prompt=text, temperature=0.5, max_tokens=500)
-    print(response)
-    # 重組回應
-    answer = response['choices'][0]['text'].replace('。','')
+    response = openai.ChatCompletion.create(
+        model="gpt-4o-mini",
+        messages=[{"role": "user", "content": text}],
+        temperature=0.5,
+        max_tokens=500
+    )
+    answer = response['choices'][0]['message']['content']
     return answer
+
 
 
 # 監聽所有來自 /callback 的 Post Request
