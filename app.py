@@ -37,7 +37,6 @@ def GPT_response(text):
     return answer
 
 
-
 # 監聽所有來自 /callback 的 Post Request
 @app.route("/callback", methods=['POST'])
 def callback():
@@ -54,21 +53,27 @@ def callback():
     return 'OK'
 
 
-# 處理訊息
+# 處理文字訊息，只有在訊息開頭為 "欸" 時才回應
 @handler.add(MessageEvent, message=TextMessage)
-def handle_message(event):
+def handle_text_message(event):
     msg = event.message.text
+    # 檢查是否以 "欸" 開頭，若否則不予回應
+    if not msg.startswith("欸"):
+        return
+    # 移除開頭的 "欸"，並加上提示文字
+    content = msg[1:].strip()
+    prompt = "請使用英文或繁體中文回答，不要使用簡體中文" + content
     try:
-        GPT_answer = GPT_response(msg)
+        GPT_answer = GPT_response(prompt)
         print(GPT_answer)
-        line_bot_api.reply_message(event.reply_token, TextSendMessage(GPT_answer))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text=GPT_answer))
     except:
         print(traceback.format_exc())
-        line_bot_api.reply_message(event.reply_token, TextSendMessage('你所使用的OPENAI API key額度可能已經超過，請於後台Log內確認錯誤訊息'))
+        line_bot_api.reply_message(event.reply_token, TextSendMessage(text='你所使用的OPENAI API key額度可能已經超過，請於後台Log內確認錯誤訊息'))
         
 
 @handler.add(PostbackEvent)
-def handle_message(event):
+def handle_postback(event):
     print(event.postback.data)
 
 
@@ -78,11 +83,11 @@ def welcome(event):
     gid = event.source.group_id
     profile = line_bot_api.get_group_member_profile(gid, uid)
     name = profile.display_name
-    message = TextSendMessage(text=f'{name}歡迎加入')
+    message = TextSendMessage(text=f'{name} 歡迎加入')
     line_bot_api.reply_message(event.reply_token, message)
         
         
-import os
 if __name__ == "__main__":
     port = int(os.environ.get('PORT', 5000))
     app.run(host='0.0.0.0', port=port)
+
